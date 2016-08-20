@@ -22,7 +22,7 @@ from flask import Flask, request, redirect
 
 UPLOAD_FOLDER = '.'
 ALLOWED_EXTENSIONS = set(['cpp', 'h'])
-
+BLACKLISTED_FILTERS = set(['build/include_alpha','legal/copyright','build/c++11','build/include_order','whitespace/end_of_line','runtime/string','build/namespaces','build/include_what_you_use'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -73,7 +73,7 @@ def upload_file():
       cpplint.ProcessFileData(file.filename,
                               file.filename[file.filename.rfind('.') + 1:], 
                               lines, error_buffer.append)
-      return '</br>'.join(str(x) for x in error_buffer.errors)
+      return '</br>'.join(str(x) for x in error_buffer.errors if x.category not in BLACKLISTED_FILTERS)
 
   # TODO: Replace this with a template file.
   return """
