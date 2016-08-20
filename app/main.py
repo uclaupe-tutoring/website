@@ -16,6 +16,8 @@ import cpplint
 import logging
 import os
 import sys
+import requests
+import datetime
 
 from contextlib import contextmanager
 from flask import Flask, request, redirect
@@ -54,6 +56,20 @@ class LinterErrorBuffer(object):
 def allowed_file(filename):
   return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+@app.route('/compile', methods=['GET'])
+def file_compiles(file_contents):
+  data = {
+    'source':file_contents,
+    'compiler':'g530',
+    'options':'',
+    'filters':{
+      'labels':'true',
+      'directives':'true',
+      'commentOnly':'true'
+    }
+  }
+  r = requests.post('http://gcc.godbolt.org/compile', json=data) 
+  return r.json()['code'] == 0
 
 @app.route('/lint', methods=['GET', 'POST'])
 def upload_file():
@@ -73,7 +89,14 @@ def upload_file():
       cpplint.ProcessFileData(file.filename,
                               file.filename[file.filename.rfind('.') + 1:], 
                               lines, error_buffer.append)
-      return '</br>'.join(str(x) for x in error_buffer.errors if x.category not in BLACKLISTED_FILTERS)
+      error_buffer.errors = filter(lambda x: x.category not in BLACKLISTED_FILTERS, error_buffer.errors)
+      if len(error_buffer.errors) == 0:
+        if file_compiles('\n'.join(lines)):
+          return 'No lint or compilation errors!'
+        else:
+          return 'Compilation errors.'
+      else:
+        return '</br>'.join(str(x) for x in error_buffer.errors if x.category not in BLACKLISTED_FILTERS)
 
   # TODO: Replace this with a template file.
   return """
