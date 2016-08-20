@@ -22,7 +22,7 @@ from flask import Flask, request, redirect
 
 UPLOAD_FOLDER = '.'
 ALLOWED_EXTENSIONS = set(['cpp', 'h'])
-BLACKLISTED_FILTERS = set(['build/include_alpha','legal/copyright','build/c++11','build/include_order','whitespace/end_of_line','runtime/string','build/namespaces','build/include_what_you_use'])
+BLACKLISTED_FILTERS = set(['build/include_alpha','legal/copyright','build/c++11','build/include_order','whitespace/end_of_line','runtime/string','build/namespaces','build/include_what_you_use','whitespace/ending_newline'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
