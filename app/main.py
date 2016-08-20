@@ -17,7 +17,6 @@ import logging
 import os
 import sys
 import requests
-import datetime
 
 from contextlib import contextmanager
 from flask import Flask, request, redirect
