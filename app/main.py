@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from flask import Flask, request, redirect, make_response
 
 UPLOAD_FOLDER = '.'
-ALLOWED_EXTENSIONS = set(['cpp', 'h'])
+ALLOWED_EXTENSIONS = set(['cpp', 'h', 'cc'])
 BLACKLISTED_FILTERS = set(['build/include_alpha','legal/copyright','build/c++11','build/include_order','whitespace/end_of_line','runtime/string','build/namespaces','build/include_what_you_use','whitespace/ending_newline'])
 
 app = Flask(__name__)
@@ -38,10 +38,7 @@ class LinterError(object):
       self.message = message
     
     def __str__(self):
-      return '{}:{}:  {}  [{}] [{}]'.format(self.filename, self.linenum, 
-                                            self.message, self.category, 
-                                            self.confidence) 
-
+      return '{}:{}:  {}'.format(self.filename, self.linenum, self.message) 
 
 class LinterErrorBuffer(object):  
   def __init__(self):
@@ -55,7 +52,7 @@ class LinterErrorBuffer(object):
 def allowed_file(filename):
   return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-def generate_markdown(file_contents):
+def generate_markdown(file_contents, language='cpp'):
   return """
 ## CS31/CS32/CS33 [the class this problem is for]
 
@@ -73,12 +70,12 @@ Example inputs and outputs, if helpful. If you don't have this, remove this sect
 
 If you solution would benefit from a textual description, put that here. If you only want to provide the code, then remove these sentences!
 
-```cpp
+```%s
 %s
 ```
 
 ---
-""" % file_contents
+""" % (language, file_contents)
 
 def file_compiles(file_contents):
   data = {
@@ -94,7 +91,15 @@ def file_compiles(file_contents):
   r = requests.post('http://gcc.godbolt.org/compile', json=data) 
   return r.json()['code'] == 0
 
-@app.route('/practice', methods=['GET', 'POST'])
+@app.route('/default_markdown', methods=['GET'])
+def default_markdown():
+  response = make_response(generate_markdown(
+    'Your assembly code, or other non-C++ code. If not using code in your solution, delete this section.',
+    language=''))
+  response.headers["Content-Disposition"] = "attachment; filename=problem.md"
+  return response
+
+@app.route('/', methods=['GET', 'POST'])
 def upload_file():
   if request.method == 'POST':
     if 'file' not in request.files:
@@ -128,22 +133,17 @@ def upload_file():
 <!doctype html>
 <title>UPE Tutoring</title>
 <h1>UPE Tutoring Fall '16 Practice Problem Tool</h1>
-Upload your .cpp or .h file containing a practice problem.</br>
+Upload your .cpp, .cc, or .h file containing a practice problem.</br>
 We'll run it through <a href="https://github.com/google/styleguide/tree/gh-pages/cpplint">Google's C++ linter</a>
  to check for style violations,</br>
-attempt to compile it, then give you a markdown file to fill out and submit!
+attempt to compile it, then give you a markdown file to fill out and submit.
 <form action="" method=post enctype=multipart/form-data>
 <p><input type=file name=file>
 <input type=submit value=Upload>
-</form>
+</form></br>
+If you are writing a question that doesn't involve C++ code (such as a CS33 Assembly question),
+download the <a href="/default_markdown">default markdown file</a>.
 """
-
-
-@app.route('/')
-def hello():
-  """Return a friendly HTTP greeting."""
-  return 'Hello World!'
-
 
 @app.errorhandler(500)
 def server_error(e):
