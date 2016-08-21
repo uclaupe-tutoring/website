@@ -19,7 +19,7 @@ import sys
 import requests
 
 from contextlib import contextmanager
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, make_response
 
 UPLOAD_FOLDER = '.'
 ALLOWED_EXTENSIONS = set(['cpp', 'h'])
@@ -27,7 +27,7 @@ BLACKLISTED_FILTERS = set(['build/include_alpha','legal/copyright','build/c++11'
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 class LinterError(object):
     def __init__(self, filename, linenum, category, confidence, message):
@@ -55,7 +55,31 @@ class LinterErrorBuffer(object):
 def allowed_file(filename):
   return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-@app.route('/compile', methods=['GET'])
+def generate_markdown(file_contents):
+  return """
+## CS31/CS32/CS33 [the class this problem is for]
+
+### Your Problem Title
+
+*Contributed by Your Name*.
+
+Your problem description. Remember to wrap in-line code in `ticks`!
+
+#### Example
+
+Example inputs and outputs, if helpful. If you don't have this, remove this section.
+
+#### Solution
+
+If you solution would benefit from a textual description, put that here. If you only want to provide the code, then remove these sentences!
+
+```cpp
+%s
+```
+
+---
+""" % file_contents
+
 def file_compiles(file_contents):
   data = {
     'source':file_contents,
@@ -70,7 +94,7 @@ def file_compiles(file_contents):
   r = requests.post('http://gcc.godbolt.org/compile', json=data) 
   return r.json()['code'] == 0
 
-@app.route('/lint', methods=['GET', 'POST'])
+@app.route('/practice', methods=['GET', 'POST'])
 def upload_file():
   if request.method == 'POST':
     if 'file' not in request.files:
@@ -91,17 +115,23 @@ def upload_file():
       error_buffer.errors = filter(lambda x: x.category not in BLACKLISTED_FILTERS, error_buffer.errors)
       if len(error_buffer.errors) == 0:
         if file_compiles('\n'.join(lines)):
-          return 'No lint or compilation errors!'
+          response = make_response(generate_markdown(''.join(lines)))
+          response.headers["Content-Disposition"] = "attachment; filename=problem.md"
+          return response
         else:
-          return 'Compilation errors.'
+          return 'Your input had compilation errors! Try checking it at the <a href=http://gcc.godbolt.org/>online compiler</a> we use.'
       else:
         return '</br>'.join(str(x) for x in error_buffer.errors if x.category not in BLACKLISTED_FILTERS)
 
   # TODO: Replace this with a template file.
   return """
 <!doctype html>
-<title>Upload new File</title>
-<h1>Upload new File</h1>
+<title>UPE Tutoring</title>
+<h1>UPE Tutoring Fall '16 Practice Problem Tool</h1>
+Upload your .cpp or .h file containing a practice problem.</br>
+We'll run it through <a href="https://github.com/google/styleguide/tree/gh-pages/cpplint">Google's C++ linter</a>
+ to check for style violations,</br>
+attempt to compile it, then give you a markdown file to fill out and submit!
 <form action="" method=post enctype=multipart/form-data>
 <p><input type=file name=file>
 <input type=submit value=Upload>
