@@ -119,12 +119,15 @@ def upload_file():
                               lines, error_buffer.append)
       error_buffer.errors = filter(lambda x: x.category not in BLACKLISTED_FILTERS, error_buffer.errors)
       if len(error_buffer.errors) == 0:
-        if file_compiles('\n'.join(lines)):
-          response = make_response(generate_markdown(''.join(lines)))
-          response.headers["Content-Disposition"] = "attachment; filename=problem.md"
-          return response
-        else:
-          return 'Your input had compilation errors! Try checking it at the <a href=http://gcc.godbolt.org/>online compiler</a> we use.'
+        response = make_response(generate_markdown(''.join(lines)))
+        response.headers["Content-Disposition"] = "attachment; filename=problem.md"
+        return response
+	#if file_compiles('\n'.join(lines)):
+        #  response = make_response(generate_markdown(''.join(lines)))
+        #  response.headers["Content-Disposition"] = "attachment; filename=problem.md"
+        #  return response
+        #else:
+        #  return 'Your input had compilation errors! Try checking it at the <a href=http://gcc.godbolt.org/>online compiler</a> we use.'
       else:
         return '</br>'.join(str(x) for x in error_buffer.errors if x.category not in BLACKLISTED_FILTERS)
 
@@ -133,10 +136,10 @@ def upload_file():
 <!doctype html>
 <title>UPE Tutoring</title>
 <h1>UPE Tutoring Fall '16 Practice Problem Tool</h1>
+First, ensure your code compiles using an <a target="_blank" href="http://gcc.godbolt.org/">online compiler</a>.</br>
 Upload your .cpp, .cc, or .h file containing a practice problem.</br>
 We'll run it through <a href="https://github.com/google/styleguide/tree/gh-pages/cpplint">Google's C++ linter</a>
- to check for style violations,</br>
-attempt to compile it, then give you a markdown file to fill out and submit.
+ to check for style violations and give you a markdown file to fill out and submit.
 <form action="" method=post enctype=multipart/form-data>
 <p><input type=file name=file>
 <input type=submit value=Upload>
