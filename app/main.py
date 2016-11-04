@@ -110,7 +110,7 @@ def upload_file():
       flash('No selected file')
       return redirect(request.url)
     if file and allowed_file(file.filename):
-      lines = file.readlines()
+      lines = map((lambda l: l.decode("utf8")), file.readlines())
       error_buffer = LinterErrorBuffer()
 
       # Use the same convention as cpplint to find the extension.
