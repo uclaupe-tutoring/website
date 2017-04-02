@@ -43,7 +43,7 @@ def main():
       GCLOUD_PATH,
       'app',
       'deploy',
-      '/Users/daniel/upewebsite/app/app.yaml'#os.path.join(APP_PATH, 'app.yaml')
+      os.path.join(APP_PATH, 'app.yaml')
   ])
 
 if __name__ == '__main__':
