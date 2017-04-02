@@ -135,7 +135,7 @@ def upload_file():
   return """
 <!doctype html>
 <title>UPE Tutoring</title>
-<h1>UPE Tutoring Fall '16 Practice Problem Tool</h1>
+<h1>UPE Tutoring Spring '17 Practice Problem Tool</h1>
 First, ensure your code compiles using an <a target="_blank" href="http://gcc.godbolt.org/">online compiler</a>.</br>
 Upload your .cpp, .cc, or .h file containing a practice problem.</br>
 We'll run it through <a href="https://github.com/google/styleguide/tree/gh-pages/cpplint">Google's C++ linter</a>

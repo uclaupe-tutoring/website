@@ -13,7 +13,6 @@ GCLOUD_PATH = distutils.spawn.find_executable('gcloud')
 APP_PATH = os.path.join(os.path.dirname(__file__), 'app')
 LIB_PATH = os.path.join(APP_PATH, 'lib')
 
-
 def main():
   parser = argparse.ArgumentParser(description='Deploys to App Engine.')
   parser.add_argument('--local',
@@ -44,7 +43,7 @@ def main():
       GCLOUD_PATH,
       'app',
       'deploy',
-      os.path.join(APP_PATH, 'app.yaml')
+      '/Users/daniel/upewebsite/app/app.yaml'#os.path.join(APP_PATH, 'app.yaml')
   ])
 
 if __name__ == '__main__':
